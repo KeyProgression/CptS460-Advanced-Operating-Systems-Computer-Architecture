@@ -1,0 +1,73 @@
+Matthew Yien
+11698797
+
+=============================================================================
+		       Part 2:
+
+                Review Questions again:
+		     
+1. In order to use an I/O device by interrupts, 4 conditions must be met.
+---------------------------------------------------------------------------
+(1). The device must be allowed to generate interrupts.
+(2). The SIC and VIC interrupt controllers must be programmed to route the
+     device interrupt through to CPU's IRQ line.
+(3). When a device interrupt occurs, the CPU must be in a state to accept
+     interrupts.
+(4). An interrupt handler (function) must be installed to handle the device
+     interrupts.
+-----------------------------------------------------------------------------
+
+2. In an ARM system supporting IRQ interrupts, e.g. KBD interrupts, 
+   the following components are needed/provided: 
+
+(1). Vector tabble at memory address 0
+     0x18: LDR PC, irq_handler_addr
+     irq_handler_addr: .word irq_handler
+
+(2). irq_handler:
+       sub lr, lr, #4
+       stmfd sp!, {r0-r12, lr}
+       bl  IRQ_chandler
+       ldmfd sp!, {r0-r12, pc}^
+
+(3). IRQ_chandler{
+       if (VIC.statusBit31 && SIC.statusBit3)
+          kbd_handler();
+     }
+
+
+
+     int data = 0;
+     char c;
+
+(4). kbd_handler()
+     {
+       get scancode;
+       c = ASCII char mapped by scancode;
+       data = 1;
+     }
+      
+(5). char kgetc()
+     {    
+	while(data==0);
+	data = 0;
+        return c;
+     }
+   
+(6). main()
+     {
+        kgetc();     // CPU executes this
+     } 
+
+
+Assume: the CPU executes kgetc() in main().
+
+1. Draw a diagram to show the control flow of CPU when a KBD key is pressed
+
+                     KCW's BAD Answer Example:
+------------------------------------------------------------------------
+                              key
+In (5) at while(data==0); ========> (1) Reason: we look at the vector table to call the interrupt handler to do an interrupt request
+   (1) ===========================> (4) Reason: you find the keymap, set data flag to true and grab the keycode from the map to return
+
+--------------- YOU finish the diagram with valid reasons -----------

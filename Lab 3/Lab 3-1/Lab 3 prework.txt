@@ -1,0 +1,81 @@
+=============================================================================
+
+	        3. HOW TO do device I/O by interrupts:
+
+Submit a (text-edited) file of your answer to TA BEFORE demo time
+
+3.1. Device must be allowed to generate interrupts:
+
+Where and how (C code) did we enable timers to generate interrupts?
+
+We enabled timers in the ts.s file, at least the entry point for the code. Switching to the IRQ mode to set up the IRQ stack pointer, then we switch back to SVC mode with IRQ interrupts enabled
+IRQ mode is only there to handle interrupts.
+
+timer_clearInterrupt(n);
+In timer handler
+
+
+3.2. Device interrupts must be routed to IRQ input pin of CPU:
+
+Where and how (C code) and how did we route timer interrupts to CPU?
+Vector table at memory address 0
+     0x18: LDR PC, irq_handler_addr
+     irq_handler_addr: .word irq_handler
+
+irq_handler:
+       sub lr, lr, #4
+       stmfd sp!, {r0-r12, lr}
+       bl  IRQ_handler
+       ldmfd sp!, {r0-r12, pc}
+
+
+IRQ_handler{
+       if (VIC.statusRegBit32 && SIC.statusRefBit3)
+           kbd_handler();
+     }
+
+kbd_handler()
+     {
+       get scancode;
+       c = ASCII char mapped by scancode;
+       hasData = 1;
+     }
+      
+char kgetc()
+     {    
+	while(hasData==0);
+	hasData = 0;
+        return c;
+     }
+   
+main()
+     {
+        unlock();    // allow CPU to accept IRQ interrupts
+        kgetc();     // CPU executes this
+     } 
+
+
+3.3. Device must be enabled to operate:
+
+Where and how did we enable timer 0 ?
+    Enabled timer 0 in main
+What would happen if we do NOT enable timer 0?
+    Interrupts wouldn't be possible
+
+3.4 CPU must have IRQ unmasked (CPSR.I_bit=1 mask out IRQ)
+
+Where and how did we let CPU run with IRQ unmasked?
+    You'll eventually enter an error state, you won't get any response while waiting. This is in the ts.s file
+What happens if we  MSR cpsr, #0x93   then call main()? (TRY it!)
+    I kept getting an error when running code, trying to debug this for now
+
+3.5. Must have an interrupt handler installed to handle timer interrupts:
+
+(1). What does copy_vectors() do? WHY?
+    It copies the vector table in ts.s to 0x0, to find allow the rest of the program to find the interrupt handler and interrupt requests from peripherals
+
+(2). CPU is excuting in a while(1); loop.
+     Show the control flow of CPU when a timer interrupt occurs:
+
+    while(1) => vectorTable.0x18 => ...... => back to interrupted point
+============================================================================

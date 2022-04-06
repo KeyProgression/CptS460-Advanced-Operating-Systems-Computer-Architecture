@@ -1,0 +1,28 @@
+Matthew Yien
+11698797
+
+1. On Intel x86 based PCs,druing booting, what does BIOS do?
+   ______BIOS performs POST then looks for hardware to boot, in order of floppy disk, CDROM, HDD, and so forth. ___________
+   How many sectors does BIOS load from the boot device?
+   ______Usually the first sector 0 ____________
+   Where in memory does BIOS load the booter?
+   ______From CMOS memory it loads the booter and lets the CPU execute code__________________________
+
+2. BIOS loads only 512 bytes of a booter into memory, which is only the 
+   beginning part of the booter. How does the booter load the remaining part of 
+   the booter into memory?
+   ____After execution of the booter, where it's usually loaded to ES, it tries to load the rest of the booter into memory usually it looks at
+   the master boot record and loads the first 12 direct blocks, it will load any indirect blocks if it detects any__________________
+
+3. Assume a COMPLETE booter is loaded at the segment 0x9000. WHY do we have to
+   set the CPU's sgement registers CS,DS,SS,ES to 0x9000?
+   ________By default the BCC uses the one segment memory model, it sets a memory segment thats begins at a 16-byte boundary________
+
+4. How do you find the file /boot/mtx?
+   Get the 2nd block on disc which should be a GD, from there we can find the iblk number of the inode table. We then load the inode table block number into a buffer,
+   cast the buffer to a the pointer ip which should now be the first inode. We increment the ip +1, to get to the 2nd inode, which is the root inode.
+   We then need to find boot inode number. After that we get the iblk again offset by inode/8 and load into buf2. Then cast that buffer into an inode. 
+
+5. How to load the (disk) blocks of /boot/mtx to the segment 0x1000?
+   _____Set the memory address to 0x1000, get the block for each ip->i_block, with an offset of 0 from memory address ox1000. Increment the block by 1kb for each ip->iblock and then we do the same
+   for any indirect blocks_____
